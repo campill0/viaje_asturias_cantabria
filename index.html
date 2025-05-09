@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mapa Familiar - Asturias y Cantabria</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-measure/dist/leaflet-measure.css">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; }
+    #map { height: 100%; }
+    .popup-content {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.4;
+      max-width: 220px;
+    }
+    .popup-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .popup-content ul {
+      padding-left: 20px;
+      margin: 5px 0;
+    }
+    .popup-content li {
+      margin-bottom: 4px;
+    }
+    .popup-content a {
+      color: #1a0dab;
+      text-decoration: underline;
+    }
+    .popup-link {
+      display: block;
+      margin-top: 6px;
+      font-size: 13px;
+      color: #1a0dab;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-measure/dist/leaflet-measure.js"></script>
+  <script>
+    // Inicializar mapa
+    const map = L.map('map').setView([43.4, -4.9], 8);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Herramienta de medición
+    const measureControl = new L.Control.Measure({
+      position: 'topleft',
+      primaryLengthUnit: 'kilometers',
+      secondaryLengthUnit: 'meters',
+      activeColor: '#db4a29',
+      completedColor: '#9b2d14'
+    }).addTo(map);
+    map.on('measurestart', () => map.dragging.disable());
+    map.on('measurefinish', () => map.dragging.enable());
+    map.on('measureclear', () => map.dragging.enable());
+
+    // Lista de destinos con detalles enlazados a búsquedas en Google Imágenes
+    const destinos = [
+      { nombre: "Gijón", coords: [43.5411, -5.6645], detalles: [ "🏖️ Playas (San Lorenzo)", "🐠 Acuario de Gijón", "🌳 Jardín Botánico Atlántico", "🍽️ Gastronomía asturiana en Tierra Astur" ] },
+      { nombre: "Ribadesella", coords: [43.4632, -5.0588], detalles: [ "🦕 Huellas de dinosaurios en la playa", "🏖️ Playa familiar de Santa Marina", "🥩 Cachopo en Sidrería El Tarteru" ] },
+      { nombre: "Luanco", coords: [43.6193, -5.7981], detalles: [ "⚓ Museo Marítimo de Asturias", "🐟 Mariscos frescos en La Posada del Mar", "🚶 Paseos por el puerto pesquero" ] },
+      { nombre: "Cangas de Onís", coords: [43.3501, -5.1327], detalles: [ "🌉 Puente Romano", "🏞️ Lagos de Covadonga", "🍲 Cocina local en El Molín de la Pedrera" ] },
+      { nombre: "Llanes", coords: [43.4194, -4.7546], detalles: [ "🏖️ Playas de Toró y Cuevas del Mar", "🥂 Sidra y cachopo en Casa El Rubiu", "🚣 Excursiones en canoa por el Sella" ] },
+      { nombre: "San Vicente de la Barquera", coords: [43.3871, -4.3951], detalles: [ "🏰 Castillo del Rey", "🏖️ Playa de Merón", "🐟 Pescados en Restaurante Las Redes" ] },
+      { nombre: "Comillas", coords: [43.3866, -4.2914], detalles: [ "🏛️ El Capricho de Gaudí", "🌳 Paseo por el Parque Güell y Martos", "🍷 Menú familiar en Gurea" ] },
+      { nombre: "Santillana del Mar", coords: [43.3878, -4.1064], detalles: [ "🏰 Casco medieval", "🦁 Zoo de Santillana", "🌿 Laberinto de Villapresente" ] },
+      { nombre: "Santander", coords: [43.4623, -3.8099], detalles: [ "🏰 Palacio de La Magdalena", "🏖️ Playa del Sardinero", "🦐 Mariscos en Agua Salada" ] },
+      { nombre: "Fuente Dé", coords: [43.1449, -4.8259], detalles: [ "🚡 Teleférico a los Picos de Europa", "🏞️ Miradores de altura", "☕ Restaurante del Parador" ] },
+      { nombre: "Potes", coords: [43.1513, -4.6195], detalles: [ "🏘️ Barrio histórico", "🌊 Paseo por el río Deva", "🍛 Cocina lebaniega en La Barrica" ] },
+      { nombre: "Desfiladero de la Hermida", coords: [43.2432, -4.5903], detalles: [ "🏔️ Impresionantes paredes de roca", "🚶 Senda Mitológica del Hozarco", "🥪 Merendero en La Sauceda" ] },
+      { nombre: "Covadonga", coords: [43.3081, -5.0548], detalles: [ "⛪ Basílica de Santa María la Real", "🏞️ Lagos de Enol y Ercina", "🥘 Menú tradicional en El Repelao" ] },
+      { nombre: "Cabárceno", coords: [43.3601, -3.8470], detalles: [ "🐘 Safari de animales en semilibertad", "🦏 Miradores de elefantes y rinocerontes", "🍽️ Menús infantiles en Los Osos" ] },
+      { nombre: "MUJA (Colunga)", coords: [43.4753, -5.2677], detalles: [ "🦕 Museo Jurásico de Asturias", "🖼️ Réplicas a tamaño real", "☕ Café temático del museo" ] },
+      { nombre: "Pozas termales - La Hermida", coords: [43.2486, -4.5833], detalles: [ "💧 Aguas termales naturales (38–40 °C)", "🚗 Parking junto al balneario", "🌿 Paseo corto desde la carretera" ] }
+    ];
+
+    destinos.forEach(({ nombre, coords, detalles }) => {
+      const search = encodeURIComponent(`${nombre} guía turística`);
+      const coordsStr = `${coords[0]},${coords[1]}`;
+      const listItems = detalles.map(item => {
+        const query = encodeURIComponent(item);
+        return `<li><a href="https://www.google.com/search?tbm=isch&q=${query}" target="_blank">${item}</a></li>`;
+      }).join('');
+      const html = `
+        <div class='popup-content'>
+          <div class='popup-title'>${nombre}</div>
+          <ul>${listItems}</ul>
+          <a class='popup-link' href='https://www.youtube.com/results?search_query=${search}' target='_blank'>Ver guías en YouTube</a>
+          <a class='popup-link' href='https://www.google.com/maps?q=${coordsStr}' target='_blank'>Abrir en Google Maps</a>
+        </div>`;
+      L.marker(coords).addTo(map).bindPopup(html);
+    });
+  </script>
+</body>
+</html>
