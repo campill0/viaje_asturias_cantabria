@@ -65,7 +65,7 @@
     map.on('measureclear', () => map.dragging.enable());
 
     // Lista de destinos con detalles enlazados a búsquedas en Google Imágenes
-    const destinos = [
+    const destinos1 = [
       { nombre: "Gijón", coords: [43.5411, -5.6645], detalles: [ "🏖️ Playas (San Lorenzo)", "🐠 Acuario de Gijón", "🌳 Jardín Botánico Atlántico", "🍽️ Gastronomía asturiana en Tierra Astur" ] },
       { nombre: "Ribadesella", coords: [43.4632, -5.0588], detalles: [ "🦕 Huellas de dinosaurios en la playa", "🏖️ Playa familiar de Santa Marina", "🥩 Cachopo en Sidrería El Tarteru" ] },
       { nombre: "Luanco", coords: [43.6193, -5.7981], detalles: [ "⚓ Museo Marítimo de Asturias", "🐟 Mariscos frescos en La Posada del Mar", "🚶 Paseos por el puerto pesquero" ] },
@@ -83,6 +83,44 @@
       { nombre: "MUJA (Colunga)", coords: [43.4753, -5.2677], detalles: [ "🦕 Museo Jurásico de Asturias", "🖼️ Réplicas a tamaño real", "☕ Café temático del museo" ] },
       { nombre: "Pozas termales - La Hermida", coords: [43.2486, -4.5833], detalles: [ "💧 Aguas termales naturales (38–40 °C)", "🚗 Parking junto al balneario", "🌿 Paseo corto desde la carretera" ] }
     ];
+
+    const destinos = [
+  { nombre: "Sebreñu", coords: [43.4607343, -5.0862242], detalles: [ "🏘️ Aldea rural con hórreos", "🌅 Mirador al Cantábrico", "🍯 Miel artesana de la zona" ] },
+  { nombre: "Cueva de Tito Bustillo", coords: [43.4612547, -5.0680492], detalles: [ "🎨 Arte rupestre Patrimonio Mundial", "🕳️ Galería de pinturas prehistóricas", "🏛️ Centro de interpretación interactivo" ] },
+  { nombre: "Ribadesella", coords: [43.463111, -5.0566643], detalles: [ "🦕 Huellas de dinosaurios en la playa", "🏖️ Playa familiar de Santa Marina", "🥩 Cachopo en Sidrería El Tarteru" ] },
+  { nombre: "Bufones de Pría", coords: [43.4584154, -4.9797614], detalles: [ "🌊 Chorros marinos impresionantes", "🚶 Senda costera hasta Cuevas del Mar", "📸 Mirador para fotos al atardecer" ] },
+  { nombre: "Playa de Gulpiyuri", coords: [43.4474967, -4.8859819], detalles: [ "🏖️ Playa interior única", "🌊 Piscina natural con marea", "🍃 Pradera ideal para picnic" ] },
+  { nombre: "MUJA (Colunga)", coords: [43.5010405, -5.2740996], detalles: [ "🦕 Museo Jurásico de Asturias", "🖼️ Réplicas de dinosaurios a tamaño real", "☕ Café temático del museo" ] },
+  { nombre: "Lastres", coords: [43.5139204, -5.27055], detalles: [ "🏘️ Villa marinera colgada del acantilado", "🏖️ Playa de La Griega y puerto", "🍤 Marisco fresco en El Barrigón" ] },
+  { nombre: "Mirador del Fitu", coords: [43.4388106, -5.1925387], detalles: [ "🌄 360° vistas de mar y montaña", "🚶 Sendero al pico Pienzu", "📸 Plataforma circular panorámica" ] },
+  { nombre: "Llanes", coords: [43.4211483, -4.7562159], detalles: [ "🏖️ Playas de Poo y Torimbia", "🎨 Cubos de la Memoria", "🍦 Helado artesanal en Revuelta" ] },
+  { nombre: "Cangas de Onís", coords: [43.3506429, -5.1311817], detalles: [ "🌉 Puente Romano sobre el Sella", "🧀 Mercado del queso Gamonéu", "🚣 Punto de salida del Descenso del Sella" ] },
+  { nombre: "Playa de Rodiles", coords: [43.5317372, -5.3769428], detalles: [ "🏄‍♂️ Spot de surf internacional", "🌲 Pinar con merenderos", "🚶 Paseo fluvial de Villaviciosa" ] },
+  { nombre: "Tazones", coords: [43.5452665, -5.4062829], detalles: [ "🏘️ Puerto ballenero pintoresco", "👑 Desembarco de Carlos V en 1517", "🦪 Ostras y mariscos en las terrazas" ] },
+  { nombre: "Covadonga", coords: [43.3123308, -5.0593809], detalles: [ "⛪ Basílica de Santa María la Real", "🏞️ Lagos de Enol y Ercina", "🥧 Carbayones en El Repelao" ] },
+  { nombre: "Restaurante La Parrilla de Prellezo", coords: [43.380235, -4.4397117], detalles: [ "🍖 Parrilladas de carne a la brasa", "🌅 Terraza con vistas al mar", "🥂 Selección de vinos cántabros" ] },
+  { nombre: "Jardín Botánico Atlántico", coords: [43.5215086, -5.6158997], detalles: [ "🌿 Colección de flora cantábrica", "🚶 Paseo por la Carbayera centenaria", "🐦 Observatorio de aves" ] },
+  { nombre: "Santuario de Covadonga", coords: [43.3075477, -5.0546135], detalles: [ "🙏 Ermita en la Santa Cueva", "🎶 Órgano histórico y cánticos", "🛍️ Tienda de recuerdos religiosos" ] },
+  { nombre: "San Vicente de la Barquera", coords: [43.3813069, -4.397058], detalles: [ "🏰 Castillo del Rey y murallas", "🏖️ Playa de Merón y Beder", "🍨 Helado artesano en Regma" ] },
+  { nombre: "Gijón", coords: [43.5322493, -5.6609733], detalles: [ "🏖️ Playa de San Lorenzo", "🐠 Acuario de Gijón", "🌳 Jardín Botánico Atlántico", "🍽️ Sidra y tapas en Tierra Astur" ] },
+  { nombre: "Parque Isabel la Católica", coords: [43.5369271, -5.6399657], detalles: [ "🌳 Jardines y estanques con cisnes", "🦚 Pavos reales paseando libres", "🚴 Carril bici hasta El Rinconín" ] },
+  { nombre: "Playa de San Lorenzo", coords: [43.5410462, -5.6500665], detalles: [ "🏖️ Arena fina y oleaje suave", "🏄‍♀️ Escuela de surf urbana", "🌅 Paseo marítimo del Muro" ] },
+  { nombre: "Parque Natural de Oyambre", coords: [43.3836382, -4.3590402], detalles: [ "🌾 Dunas protegidas", "🐦 Avistamiento de aves migratorias", "🏖️ Playa virgen de Oyambre" ] },
+  { nombre: "Acuario de Gijón", coords: [43.5424604, -5.6766247], detalles: [ "🐠 Túnel submarino 360°", "🦈 Tanque de tiburones", "👨‍👩‍👦 Talleres interactivos" ] },
+  { nombre: "Comillas", coords: [43.3856192, -4.2922535], detalles: [ "🏛️ El Capricho de Gaudí", "🌳 Parque de Sobrellano", "🍷 Menú familiar en Gurea" ] },
+  { nombre: "Luanco", coords: [43.6136722, -5.792911], detalles: [ "⚓ Museo Marítimo de Asturias", "🐟 Pescados y mariscos en el puerto", "🚶 Paseo marítimo hasta Moniello" ] },
+  { nombre: "Cueva de El Soplao", coords: [43.2964859, -4.4101414], detalles: [ "💎 Estalactitas excéntricas únicas", "🚂 Tren minero de acceso", "📽️ Proyección sobre geología" ] },
+  { nombre: "Santillana del Mar", coords: [43.3873327, -4.1066092], detalles: [ "🏰 Casco medieval empedrado", "🦁 Zoo de Santillana", "🌿 Laberinto de Villapresente" ] },
+  { nombre: "Cabo de Peñas", coords: [43.646132, -5.85121], detalles: [ "🌊 Acantilados más al norte de Asturias", "🏠 Faro y centro de interpretación", "🥾 Ruta costera a Verdicio" ] },
+  { nombre: "Suances", coords: [43.4257047, -4.0427225], detalles: [ "🏖️ Playa de Los Locos (surf)", "🏰 Faro punta del Torco", "🍤 Mariscos en La Dársena" ] },
+  { nombre: "Cudillero", coords: [43.5629162, -6.1452648], detalles: [ "🏘️ Anfiteatro de casas de colores", "🐟 Rula de pescadores diaria", "🍲 Caldereta de pescador" ] },
+  { nombre: "Santander", coords: [43.4636346, -3.8226402], detalles: [ "🏰 Palacio de La Magdalena", "🏖️ Playa del Sardinero", "🦐 Tapas en el Paseo Pereda" ] },
+  { nombre: "Cabárceno", coords: [43.3581451, -3.8227696], detalles: [ "🐘 Safari de fauna en semilibertad", "🦏 Telecabina sobre el parque", "🍽️ Menús infantiles en Los Osos" ] },
+  { nombre: "Murcia", coords: [37.9893044, -1.1320073], detalles: [ "🏛️ Catedral de Santa María", "🌳 Jardín del Malecón", "🍋 Tapas murcianas y paparajotes" ] },
+  { nombre: "Segovia", coords: [40.9602655, -4.1101125], detalles: [ "🏗️ Acueducto romano", "🏰 Alcázar de Segovia", "⛪ Catedral gótica", "🍖 Cochinillo asado en Mesón de Cándido" ] },
+  { nombre: "Sigüenza", coords: [41.06448, -2.641057], detalles: [ "🏰 Castillo-Parador medieval", "⛪ Catedral de Santa María", "🗿 Tumba del Doncel de Sigüenza", "🍷 Tapas de cabrito y vino" ] }
+
+];
 
     destinos.forEach(({ nombre, coords, detalles }) => {
       const search = encodeURIComponent(`${nombre} guía turística`);
