@@ -2,142 +2,260 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mapa Familiar - Asturias y Cantabria</title>
+  <title>Mapa familiar – Asturias & Cantabria</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Leaflet-measure (opcional) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet-measure/dist/leaflet-measure.css">
+  <script src="https://unpkg.com/leaflet-measure/dist/leaflet-measure.js"></script>
+
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; }
-    #map { height: 100%; }
-    .popup-content {
-      font-family: Arial, sans-serif;
-      font-size: 14px;
-      line-height: 1.4;
-      max-width: 220px;
+    html,body{margin:0;padding:0;height:100%}
+    #map{height:100%}
+
+    /* ——— Pop-ups ——— */
+    .popup-content{font-family:Arial,sans-serif;font-size:14px;line-height:1.4;max-width:220px}
+    .popup-title{font-size:16px;font-weight:bold;margin-bottom:5px}
+    .popup-content ul{padding-left:20px;margin:5px 0}
+    .popup-content li{margin-bottom:4px}
+    .popup-link{display:block;margin-top:6px;font-size:13px;color:#1a0dab;text-decoration:underline}
+
+    /* ——— Search box ——— */
+    #searchBox{
+      position:absolute;top:10px;left:60px;z-index:1000;
+      box-shadow:0 1px 4px rgba(0,0,0,.3);
     }
-    .popup-title {
-      font-size: 16px;
-      font-weight: bold;
-      margin-bottom: 5px;
+    #filterInput{
+      width:220px;padding:6px 8px;border:1px solid #aaa;border-radius:4px;
+      font-size:14px;outline:none;
     }
-    .popup-content ul {
-      padding-left: 20px;
-      margin: 5px 0;
+
+    /* ——— Sidebar ——— */
+    #sidebar{
+      position:absolute;top:0;right:0;height:100%;width:270px;
+      background:#fff;box-shadow:-2px 0 5px rgba(0,0,0,.25);
+      transform:translateX(270px);transition:transform .3s ease;
+      z-index:999;
+      display:flex;flex-direction:column;
     }
-    .popup-content li {
-      margin-bottom: 4px;
+    #sidebar.open{transform:translateX(0)}
+    #toggleSidebar{
+      position:absolute;right:270px;top:50%;transform:translateY(-50%);
+      background:#fff;border:1px solid #ccc;border-right:none;
+      border-radius:4px 0 0 4px;padding:4px 8px;cursor:pointer;
+      box-shadow:-2px 0 4px rgba(0,0,0,.25);z-index:1000;
     }
-    .popup-content a {
-      color: #1a0dab;
-      text-decoration: underline;
+    #sidebar h3{margin:10px;font-size:16px;font-family:Arial}
+    #listado{
+      flex:1;overflow-y:auto;padding:0 10px 15px 15px;
+      font-family:Arial;font-size:14px;
     }
-    .popup-link {
-      display: block;
-      margin-top: 6px;
-      font-size: 13px;
-      color: #1a0dab;
-      text-decoration: underline;
-    }
+    #listado li{margin:4px 0;cursor:pointer;color:#0645ad;text-decoration:underline}
   </style>
 </head>
 <body>
-  <div id="map"></div>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-measure/dist/leaflet-measure.js"></script>
-  <script>
-    // Inicializar mapa
-    const map = L.map('map').setView([43.4, -4.9], 8);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+<!-- Capa de búsqueda -->
+<div id="searchBox">
+  <input id="filterInput" type="text" placeholder="Filtrar lugares…">
+</div>
 
-    // Herramienta de medición
-    const measureControl = new L.Control.Measure({
-      position: 'topleft',
-      primaryLengthUnit: 'kilometers',
-      secondaryLengthUnit: 'meters',
-      activeColor: '#db4a29',
-      completedColor: '#9b2d14'
-    }).addTo(map);
-    map.on('measurestart', () => map.dragging.disable());
-    map.on('measurefinish', () => map.dragging.enable());
-    map.on('measureclear', () => map.dragging.enable());
+<!-- Botón de la barra -->
+<button id="toggleSidebar">☰</button>
 
-    // Lista de destinos con detalles enlazados a búsquedas en Google Imágenes
-    const destinos1 = [
-      { nombre: "Gijón", coords: [43.5411, -5.6645], detalles: [ "🏖️ Playas (San Lorenzo)", "🐠 Acuario de Gijón", "🌳 Jardín Botánico Atlántico", "🍽️ Gastronomía asturiana en Tierra Astur" ] },
-      { nombre: "Ribadesella", coords: [43.4632, -5.0588], detalles: [ "🦕 Huellas de dinosaurios en la playa", "🏖️ Playa familiar de Santa Marina", "🥩 Cachopo en Sidrería El Tarteru" ] },
-      { nombre: "Luanco", coords: [43.6193, -5.7981], detalles: [ "⚓ Museo Marítimo de Asturias", "🐟 Mariscos frescos en La Posada del Mar", "🚶 Paseos por el puerto pesquero" ] },
-      { nombre: "Cangas de Onís", coords: [43.3501, -5.1327], detalles: [ "🌉 Puente Romano", "🏞️ Lagos de Covadonga", "🍲 Cocina local en El Molín de la Pedrera" ] },
-      { nombre: "Llanes", coords: [43.4194, -4.7546], detalles: [ "🏖️ Playas de Toró y Cuevas del Mar", "🥂 Sidra y cachopo en Casa El Rubiu", "🚣 Excursiones en canoa por el Sella" ] },
-      { nombre: "San Vicente de la Barquera", coords: [43.3871, -4.3951], detalles: [ "🏰 Castillo del Rey", "🏖️ Playa de Merón", "🐟 Pescados en Restaurante Las Redes" ] },
-      { nombre: "Comillas", coords: [43.3866, -4.2914], detalles: [ "🏛️ El Capricho de Gaudí", "🌳 Paseo por el Parque Güell y Martos", "🍷 Menú familiar en Gurea" ] },
-      { nombre: "Santillana del Mar", coords: [43.3878, -4.1064], detalles: [ "🏰 Casco medieval", "🦁 Zoo de Santillana", "🌿 Laberinto de Villapresente" ] },
-      { nombre: "Santander", coords: [43.4623, -3.8099], detalles: [ "🏰 Palacio de La Magdalena", "🏖️ Playa del Sardinero", "🦐 Mariscos en Agua Salada" ] },
-      { nombre: "Fuente Dé", coords: [43.1449, -4.8259], detalles: [ "🚡 Teleférico a los Picos de Europa", "🏞️ Miradores de altura", "☕ Restaurante del Parador" ] },
-      { nombre: "Potes", coords: [43.1513, -4.6195], detalles: [ "🏘️ Barrio histórico", "🌊 Paseo por el río Deva", "🍛 Cocina lebaniega en La Barrica" ] },
-      { nombre: "Desfiladero de la Hermida", coords: [43.2432, -4.5903], detalles: [ "🏔️ Impresionantes paredes de roca", "🚶 Senda Mitológica del Hozarco", "🥪 Merendero en La Sauceda" ] },
-      { nombre: "Covadonga", coords: [43.3081, -5.0548], detalles: [ "⛪ Basílica de Santa María la Real", "🏞️ Lagos de Enol y Ercina", "🥘 Menú tradicional en El Repelao" ] },
-      { nombre: "Cabárceno", coords: [43.3601, -3.8470], detalles: [ "🐘 Safari de animales en semilibertad", "🦏 Miradores de elefantes y rinocerontes", "🍽️ Menús infantiles en Los Osos" ] },
-      { nombre: "MUJA (Colunga)", coords: [43.4753, -5.2677], detalles: [ "🦕 Museo Jurásico de Asturias", "🖼️ Réplicas a tamaño real", "☕ Café temático del museo" ] },
-      { nombre: "Pozas termales - La Hermida", coords: [43.2486, -4.5833], detalles: [ "💧 Aguas termales naturales (38–40 °C)", "🚗 Parking junto al balneario", "🌿 Paseo corto desde la carretera" ] }
-    ];
+<!-- Barra lateral -->
+<div id="sidebar">
+  <h3>Puntos visibles</h3>
+  <ul id="listado"></ul>
+</div>
 
-    const destinos = [
-  { nombre: "Sebreñu", coords: [43.4607343, -5.0862242], detalles: [ "🏘️ Aldea rural con hórreos", "🌅 Mirador al Cantábrico", "🍯 Miel artesana de la zona" ] },
-  { nombre: "Cueva de Tito Bustillo", coords: [43.4612547, -5.0680492], detalles: [ "🎨 Arte rupestre Patrimonio Mundial", "🕳️ Galería de pinturas prehistóricas", "🏛️ Centro de interpretación interactivo" ] },
-  { nombre: "Ribadesella", coords: [43.463111, -5.0566643], detalles: [ "🦕 Huellas de dinosaurios en la playa", "🏖️ Playa familiar de Santa Marina", "🥩 Cachopo en Sidrería El Tarteru" ] },
-  { nombre: "Bufones de Pría", coords: [43.4584154, -4.9797614], detalles: [ "🌊 Chorros marinos impresionantes", "🚶 Senda costera hasta Cuevas del Mar", "📸 Mirador para fotos al atardecer" ] },
-  { nombre: "Playa de Gulpiyuri", coords: [43.4474967, -4.8859819], detalles: [ "🏖️ Playa interior única", "🌊 Piscina natural con marea", "🍃 Pradera ideal para picnic" ] },
-  { nombre: "MUJA (Colunga)", coords: [43.5010405, -5.2740996], detalles: [ "🦕 Museo Jurásico de Asturias", "🖼️ Réplicas de dinosaurios a tamaño real", "☕ Café temático del museo" ] },
-  { nombre: "Lastres", coords: [43.5139204, -5.27055], detalles: [ "🏘️ Villa marinera colgada del acantilado", "🏖️ Playa de La Griega y puerto", "🍤 Marisco fresco en El Barrigón" ] },
-  { nombre: "Mirador del Fitu", coords: [43.4388106, -5.1925387], detalles: [ "🌄 360° vistas de mar y montaña", "🚶 Sendero al pico Pienzu", "📸 Plataforma circular panorámica" ] },
-  { nombre: "Llanes", coords: [43.4211483, -4.7562159], detalles: [ "🏖️ Playas de Poo y Torimbia", "🎨 Cubos de la Memoria", "🍦 Helado artesanal en Revuelta" ] },
-  { nombre: "Cangas de Onís", coords: [43.3506429, -5.1311817], detalles: [ "🌉 Puente Romano sobre el Sella", "🧀 Mercado del queso Gamonéu", "🚣 Punto de salida del Descenso del Sella" ] },
-  { nombre: "Playa de Rodiles", coords: [43.5317372, -5.3769428], detalles: [ "🏄‍♂️ Spot de surf internacional", "🌲 Pinar con merenderos", "🚶 Paseo fluvial de Villaviciosa" ] },
-  { nombre: "Tazones", coords: [43.5452665, -5.4062829], detalles: [ "🏘️ Puerto ballenero pintoresco", "👑 Desembarco de Carlos V en 1517", "🦪 Ostras y mariscos en las terrazas" ] },
-  { nombre: "Covadonga", coords: [43.3123308, -5.0593809], detalles: [ "⛪ Basílica de Santa María la Real", "🏞️ Lagos de Enol y Ercina", "🥧 Carbayones en El Repelao" ] },
-  { nombre: "Restaurante La Parrilla de Prellezo", coords: [43.380235, -4.4397117], detalles: [ "🍖 Parrilladas de carne a la brasa", "🌅 Terraza con vistas al mar", "🥂 Selección de vinos cántabros" ] },
-  { nombre: "Jardín Botánico Atlántico", coords: [43.5215086, -5.6158997], detalles: [ "🌿 Colección de flora cantábrica", "🚶 Paseo por la Carbayera centenaria", "🐦 Observatorio de aves" ] },
-  { nombre: "Santuario de Covadonga", coords: [43.3075477, -5.0546135], detalles: [ "🙏 Ermita en la Santa Cueva", "🎶 Órgano histórico y cánticos", "🛍️ Tienda de recuerdos religiosos" ] },
-  { nombre: "San Vicente de la Barquera", coords: [43.3813069, -4.397058], detalles: [ "🏰 Castillo del Rey y murallas", "🏖️ Playa de Merón y Beder", "🍨 Helado artesano en Regma" ] },
-  { nombre: "Gijón", coords: [43.5322493, -5.6609733], detalles: [ "🏖️ Playa de San Lorenzo", "🐠 Acuario de Gijón", "🌳 Jardín Botánico Atlántico", "🍽️ Sidra y tapas en Tierra Astur" ] },
-  { nombre: "Parque Isabel la Católica", coords: [43.5369271, -5.6399657], detalles: [ "🌳 Jardines y estanques con cisnes", "🦚 Pavos reales paseando libres", "🚴 Carril bici hasta El Rinconín" ] },
-  { nombre: "Playa de San Lorenzo", coords: [43.5410462, -5.6500665], detalles: [ "🏖️ Arena fina y oleaje suave", "🏄‍♀️ Escuela de surf urbana", "🌅 Paseo marítimo del Muro" ] },
-  { nombre: "Parque Natural de Oyambre", coords: [43.3836382, -4.3590402], detalles: [ "🌾 Dunas protegidas", "🐦 Avistamiento de aves migratorias", "🏖️ Playa virgen de Oyambre" ] },
-  { nombre: "Acuario de Gijón", coords: [43.5424604, -5.6766247], detalles: [ "🐠 Túnel submarino 360°", "🦈 Tanque de tiburones", "👨‍👩‍👦 Talleres interactivos" ] },
-  { nombre: "Comillas", coords: [43.3856192, -4.2922535], detalles: [ "🏛️ El Capricho de Gaudí", "🌳 Parque de Sobrellano", "🍷 Menú familiar en Gurea" ] },
-  { nombre: "Luanco", coords: [43.6136722, -5.792911], detalles: [ "⚓ Museo Marítimo de Asturias", "🐟 Pescados y mariscos en el puerto", "🚶 Paseo marítimo hasta Moniello" ] },
-  { nombre: "Cueva de El Soplao", coords: [43.2964859, -4.4101414], detalles: [ "💎 Estalactitas excéntricas únicas", "🚂 Tren minero de acceso", "📽️ Proyección sobre geología" ] },
-  { nombre: "Santillana del Mar", coords: [43.3873327, -4.1066092], detalles: [ "🏰 Casco medieval empedrado", "🦁 Zoo de Santillana", "🌿 Laberinto de Villapresente" ] },
-  { nombre: "Cabo de Peñas", coords: [43.646132, -5.85121], detalles: [ "🌊 Acantilados más al norte de Asturias", "🏠 Faro y centro de interpretación", "🥾 Ruta costera a Verdicio" ] },
-  { nombre: "Suances", coords: [43.4257047, -4.0427225], detalles: [ "🏖️ Playa de Los Locos (surf)", "🏰 Faro punta del Torco", "🍤 Mariscos en La Dársena" ] },
-  { nombre: "Cudillero", coords: [43.5629162, -6.1452648], detalles: [ "🏘️ Anfiteatro de casas de colores", "🐟 Rula de pescadores diaria", "🍲 Caldereta de pescador" ] },
-  { nombre: "Santander", coords: [43.4636346, -3.8226402], detalles: [ "🏰 Palacio de La Magdalena", "🏖️ Playa del Sardinero", "🦐 Tapas en el Paseo Pereda" ] },
-  { nombre: "Cabárceno", coords: [43.3581451, -3.8227696], detalles: [ "🐘 Safari de fauna en semilibertad", "🦏 Telecabina sobre el parque", "🍽️ Menús infantiles en Los Osos" ] },
-  { nombre: "Murcia", coords: [37.9893044, -1.1320073], detalles: [ "🏛️ Catedral de Santa María", "🌳 Jardín del Malecón", "🍋 Tapas murcianas y paparajotes" ] },
-  { nombre: "Segovia", coords: [40.9602655, -4.1101125], detalles: [ "🏗️ Acueducto romano", "🏰 Alcázar de Segovia", "⛪ Catedral gótica", "🍖 Cochinillo asado en Mesón de Cándido" ] },
-  { nombre: "Sigüenza", coords: [41.06448, -2.641057], detalles: [ "🏰 Castillo-Parador medieval", "⛪ Catedral de Santa María", "🗿 Tumba del Doncel de Sigüenza", "🍷 Tapas de cabrito y vino" ] }
+<div id="map"></div>
+
+<script>
+/* === 1. Mapa base === */
+const map = L.map('map').setView([43.4,-4.9],8);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  attribution:'© OpenStreetMap contributors'
+}).addTo(map);
+
+/* Herramienta de medición */
+new L.Control.Measure({
+  position:'topleft',
+  primaryLengthUnit:'kilometers',
+  secondaryLengthUnit:'meters'
+}).addTo(map);
+
+/* === 2. Iconos de color (leaflet-color-markers) === */
+function iconoColor(c){
+  const b='https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/';
+  return L.icon({
+    iconUrl:`${b}marker-icon-2x-${c}.png`,
+    iconRetinaUrl:`${b}marker-icon-2x-${c}.png`,
+    shadowUrl:`${b}marker-shadow.png`,
+    iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]
+  });
+}
+
+const iconos={
+  alojamiento : iconoColor('violet'),
+  restauracion: iconoColor('orange'),
+  patrimonio  : iconoColor('red'),
+  museos      : iconoColor('red'),
+  naturaleza  : iconoColor('green'),
+  playas      : iconoColor('blue'),
+  rutas       : iconoColor('yellow'),
+  miradores   : iconoColor('grey'),
+  queserias   : iconoColor('black')
+};
+const fallbackIcon=iconoColor('black');
+
+/* === 3. Array de destinos (el que ya tienes) === */
+const destinos=[
+  {nombre:"Sebreñu",categoria:"alojamiento",coords:[43.4607343,-5.0862242],detalles:["🏘️ Aldea rural con hórreos","🌅 Mirador al Cantábrico","🍯 Miel artesana"]},
+  {nombre:"Cueva de Tito Bustillo",categoria:"museos",coords:[43.4612547,-5.0680492],detalles:["🎨 Arte rupestre Patrimonio Mundial","🕳️ Galería de pinturas","🏛️ Centro de interpretación"]},
+  {nombre:"Ribadesella",categoria:"playas",coords:[43.463111,-5.0566643],detalles:["🦕 Huellas de dinosaurios","🏖️ Playa Santa Marina","🥩 Cachopo en Sidrería"]},
+  {nombre:"Bufones de Pría",categoria:"naturaleza",coords:[43.4584154,-4.9797614],detalles:["🌊 Chorros marinos","🚶 Senda a Cuevas del Mar","📸 Mirador atardecer"]},
+  {nombre:"Playa de Gulpiyuri",categoria:"playas",coords:[43.4474967,-4.8859819],detalles:["🏖️ Playa interior","🌊 Piscina con marea","🍃 Pradera picnic"]},
+  {nombre:"MUJA (Colunga)",categoria:"museos",coords:[43.5010405,-5.2740996],detalles:["🦕 Museo Jurásico","🖼️ Réplicas tamaño real","☕ Café temático"]},
+  {nombre:"Lastres",categoria:"patrimonio",coords:[43.5139204,-5.27055],detalles:["🏘️ Villa marinera","🏖️ Playa La Griega","🍤 Marisco fresco"]},
+  {nombre:"Mirador del Fitu",categoria:"miradores",coords:[43.4388106,-5.1925387],detalles:["🌄 360° vistas","🚶 Sendero Pico Pienzu","📸 Plataforma"]},
+  {nombre:"Llanes",categoria:"playas",coords:[43.4211483,-4.7562159],detalles:["🏖️ Playas Poo y Torimbia","🎨 Cubos de la Memoria","🍦 Helado artesanal"]},
+  {nombre:"Cangas de Onís",categoria:"rutas",coords:[43.3506429,-5.1311817],detalles:["🌉 Puente Romano","🧀 Mercado Gamonéu","🚣 Descenso del Sella"]},
+  {nombre:"Playa de Rodiles",categoria:"playas",coords:[43.5317372,-5.3769428],detalles:["🏄‍♂️ Surf internacional","🌲 Pinar merenderos","🚶 Paseo fluvial"]},
+  {nombre:"Tazones",categoria:"patrimonio",coords:[43.5452665,-5.4062829],detalles:["🏘️ Puerto ballenero","👑 Desembarco Carlos V","🦪 Ostras y mariscos"]},
+  {nombre:"Covadonga",categoria:"patrimonio",coords:[43.3123308,-5.0593809],detalles:["⛪ Basílica","🏞️ Lagos Enol y Ercina","🥧 Carbayones"]},
+  {nombre:"Restaurante La Parrilla de Prellezo",categoria:"restauracion",coords:[43.380235,-4.4397117],detalles:["🍖 Parrilladas","🌅 Terraza al mar","🥂 Vinos cántabros"]},
+  {nombre:"Jardín Botánico Atlántico",categoria:"naturaleza",coords:[43.5215086,-5.6158997],detalles:["🌿 Flora cantábrica","🚶 Carbayera centenaria","🐦 Observatorio aves"]},
+  {nombre:"Santuario de Covadonga",categoria:"patrimonio",coords:[43.3075477,-5.0546135],detalles:["🙏 Santa Cueva","🎶 Órgano histórico","🛍️ Recuerdos"]},
+  {nombre:"San Vicente de la Barquera",categoria:"patrimonio",coords:[43.3813069,-4.397058],detalles:["🏰 Castillo del Rey","🏖️ Playa Merón","🍨 Helado Regma"]},
+  {nombre:"Gijón",categoria:"playas",coords:[43.5322493,-5.6609733],detalles:["🏖️ Playa San Lorenzo","🐠 Acuario","🌳 Jardín Botánico","🍽️ Sidra y tapas"]},
+  {nombre:"Parque Isabel la Católica",categoria:"naturaleza",coords:[43.5369271,-5.6399657],detalles:["🌳 Jardines y estanques","🦚 Pavos reales","🚴 Carril bici"]},
+  {nombre:"Playa de San Lorenzo",categoria:"playas",coords:[43.5410462,-5.6500665],detalles:["🏖️ Arena fina","🏄‍♀️ Escuela surf","🌅 Paseo marítimo"]},
+  {nombre:"Parque Natural de Oyambre",categoria:"naturaleza",coords:[43.3836382,-4.3590402],detalles:["🌾 Dunas protegidas","🐦 Aves migratorias","🏖️ Playa virgen"]},
+  {nombre:"Acuario de Gijón",categoria:"museos",coords:[43.5424604,-5.6766247],detalles:["🐠 Túnel 360°","🦈 Tiburones","👨‍👩‍👦 Talleres"]},
+  {nombre:"Comillas",categoria:"patrimonio",coords:[43.3856192,-4.2922535],detalles:["🏛️ El Capricho de Gaudí","🌳 Parque Sobrellano","🍷 Menú familiar"]},
+  {nombre:"Luanco",categoria:"patrimonio",coords:[43.6136722,-5.792911],detalles:["⚓ Museo Marítimo","🐟 Pescados frescos","🚶 Paseo marítimo"]},
+  {nombre:"Cueva de El Soplao",categoria:"naturaleza",coords:[43.2964859,-4.4101414],detalles:["💎 Estalactitas únicas","🚂 Tren minero","📽️ Proyección geología"]},
+  {nombre:"Santillana del Mar",categoria:"alojamiento",coords:[43.3873327,-4.1066092],detalles:["🏰 Casco medieval","🦁 Zoo","🌿 Laberinto"]},
+  {nombre:"Cabo de Peñas",categoria:"miradores",coords:[43.646132,-5.85121],detalles:["🌊 Acantilados","🏠 Faro","🥾 Ruta costera"]},
+  {nombre:"Suances",categoria:"playas",coords:[43.4257047,-4.0427225],detalles:["🏖️ Playa Los Locos","🏰 Faro Torco","🍤 Mariscos"]},
+  {nombre:"Cudillero",categoria:"patrimonio",coords:[43.5629162,-6.1452648],detalles:["🏘️ Casas de colores","🐟 Rula diaria","🍲 Caldereta"]},
+  {nombre:"Santander",categoria:"playas",coords:[43.4636346,-3.8226402],detalles:["🏰 Palacio Magdalena","🏖️ Playa Sardinero","🦐 Tapas Paseo Pereda"]},
+  {nombre:"Cabárceno",categoria:"naturaleza",coords:[43.3581451,-3.8227696],detalles:["🐘 Safari semilibertad","🦏 Telecabina","🍽️ Menús infantiles"]},
+  {nombre:"Murcia",categoria:"patrimonio",coords:[37.9893044,-1.1320073],detalles:["🏛️ Catedral","🌳 Jardín Malecón","🍋 Paparajotes"]},
+  {nombre:"Segovia",categoria:"patrimonio",coords:[40.9602655,-4.1101125],detalles:["🏗️ Acueducto","🏰 Alcázar","⛪ Catedral","🍖 Cochinillo"]},
+  {nombre:"Sigüenza",categoria:"patrimonio",coords:[41.06448,-2.641057],detalles:["🏰 Castillo-Parador","⛪ Catedral","🗿 Doncel","🍷 Tapas cabrito"]},
+  {nombre:"Camín Encantau",categoria:"rutas",coords:[43.3967351,-4.9141557],detalles:["🥾 Ruta mitológica en Llanes","🌲 Bosques y aldeas","🗿 Esculturas tradicionales"]},
+  {nombre:"Parque de la Prehistoria (Teverga)",categoria:"museos",coords:[43.1376562,-6.0755993],detalles:["🦣 Reconstrucciones de fauna prehistórica","🎨 Talleres y actividades didácticas","🌳 Entorno natural del valle de Teverga"]}, 
+ /* === QUESERÍAS (nueva categoría) === */
+  {nombre:"Quesos Artesanos Rebollín",categoria:"queserias",coords:[43.2504393,-5.9832577],detalles:["🧀 Queso artesanal asturiano","🛒 Tienda y degustación","👀 Visitas guiadas (consultar)"]},
+  {nombre:"Quesería La Peñona",categoria:"queserias",coords:[43.5295336,-6.1183067],detalles:["🧀 Queso artesanal asturiano","🛒 Tienda y degustación","👀 Visitas guiadas (consultar)"]},
+  {nombre:"Quesería Leche Leche",categoria:"queserias",coords:[43.4176037,-4.8037489],detalles:["🧀 Queso artesanal asturiano","🛒 Tienda y degustación","👀 Visitas guiadas (consultar)"]},
+  {nombre:"Quesería Temia",categoria:"queserias",coords:[43.3305872,-6.075697],detalles:["🧀 Queso artesanal asturiano","🛒 Tienda y degustación","👀 Visitas guiadas (consultar)"]},
+  {nombre:"Quesería Demués",categoria:"queserias",coords:[43.3216986,-4.9871908],detalles:["🧀 Queso artesanal asturiano","🛒 Tienda y degustación","👀 Visitas guiadas (consultar)"]},
+  {nombre:"Quesería Vega de Ario",categoria:"queserias",coords:[43.3360194,-4.9697517],detalles:["🧀 Queso artesanal asturiano","🛒 Tienda y degustación","👀 Visitas guiadas (consultar)"]},
+  {nombre:"Quesería Quesos de Taramundi",categoria:"queserias",coords:[43.3603936,-7.1083458],detalles:["🧀 Queso artesanal asturiano","🛒 Tienda y degustación","👀 Visitas guiadas (consultar)"]},
+  {nombre:"Quesería Los Caserinos",categoria:"queserias",coords:[43.468115,-5.4672064],detalles:["🧀 Queso artesanal asturiano","🛒 Tienda y degustación","👀 Visitas guiadas (consultar)"]},
+  {nombre:"Quesería El Cabriteru",categoria:"queserias",coords:[43.3140512,-4.8074208],detalles:["🧀 Queso artesanal asturiano","🛒 Tienda y degustación","👀 Visitas guiadas (consultar)"]},
+  {nombre:"Quesería Maín",categoria:"queserias",coords:[43.2333596,-4.746799],detalles:["🧀 Queso artesanal asturiano","🛒 Tienda y degustación","👀 Visitas guiadas (consultar)"]},
+  {nombre:"Quesería Ca Sanchu",categoria:"queserias",coords:[43.31695,-6.131658],detalles:["🧀 Queso artesanal asturiano","🛒 Tienda y degustación","👀 Visitas guiadas (consultar)"]},
+  {nombre:"Quesería Vega de Tordín",categoria:"queserias",coords:[43.3029703,-4.8085097],detalles:["🧀 Queso artesanal asturiano","🛒 Tienda y degustación","👀 Visitas guiadas (consultar)"]},
+{nombre:"Taramundi", categoria:"patrimonio", coords:[43.3603936,-7.1083458], detalles:["🏘️ Villa artesanal de navajas","🌿 Paisaje de montaña","🧶 Artesanía y telares"]},
+{nombre:"Mazonovo", categoria:"museos", coords:[43.3567245,-7.1064131], detalles:["⚙️ Museo de molinos","🌊 Canal fluvial en funcionamiento","🎫 Demostraciones en vivo"]},
+{nombre:"Os Teixóis", categoria:"patrimonio", coords:[43.341238,-7.0796733], detalles:["🏘️ Conjunto etnográfico","⚒️ Herrería hidráulica","🌲 Ruta del agua"]},
+{nombre:"As Veigas", categoria:"patrimonio", coords:[43.3276453,-7.0857983], detalles:["🏘️ Aldea tradicional en valle","🌄 Miradores de montaña","🍲 Gastronomía local"]},
+{nombre:"Cueva Huerta (Teverga)", categoria:"naturaleza", coords:[43.1242105,-6.0588549], detalles:["🕳️ Cueva kárstica declarada Monumento Natural","🦇 Importante colonia de murciélagos","👟 Visitas guiadas y espeleorrutas"]},
+{nombre:"Funicular de Bulnes (Picos de Europa)", categoria:"rutas", coords:[43.1872155,-4.821524], detalles:["🚠 Acceso subterráneo a Bulnes","🏞️ Vistas del Macizo Central","⏱️ Trayecto de 7 minutos"]},
+{nombre:"Museo de la Sidra (Nava)", categoria:"museos", coords:[43.3573835,-5.5050385], detalles:["🍏 Historia y proceso de la sidra","🍻 Escanciado interactivo","🥂 Degustación al finalizar"]},
+{nombre:"Playa de Poo", categoria:"playas", coords:[43.4289578,-4.7842527], detalles:["🏖️ Ensenada de agua tranquila","🌅 Marea formadora de piscina natural","👨‍👩‍👧 Ideal para familias y niños"]},
+
 
 ];
 
-    destinos.forEach(({ nombre, coords, detalles }) => {
-      const search = encodeURIComponent(`${nombre} guía turística`);
-      const coordsStr = `${coords[0]},${coords[1]}`;
-      const listItems = detalles.map(item => {
-        const query = encodeURIComponent(item);
-        return `<li><a href="https://www.google.com/search?tbm=isch&q=${query}" target="_blank">${item}</a></li>`;
-      }).join('');
-      const html = `
-        <div class='popup-content'>
-          <div class='popup-title'>${nombre}</div>
-          <ul>${listItems}</ul>
-          <a class='popup-link' href='https://www.youtube.com/results?search_query=${search}' target='_blank'>Ver guías en YouTube</a>
-          <a class='popup-link' href='https://www.google.com/maps?q=${coordsStr}' target='_blank'>Abrir en Google Maps</a>
-        </div>`;
-      L.marker(coords).addTo(map).bindPopup(html);
-    });
-  </script>
+
+/* === 4. Crear marcadores y almacenarlos con su data === */
+const markerObjs=[];           // {marker,data}
+const capas={};                // LayerGroups por categoría
+
+destinos.forEach(d=>{
+  if(!capas[d.categoria]) capas[d.categoria]=L.layerGroup().addTo(map);
+
+  const items=d.detalles.map(t=>`<li>${t}</li>`).join('');
+  const popup=`<div class="popup-content">
+                 <div class="popup-title">${d.nombre}</div>
+                 <ul>${items}</ul>
+                 <a class="popup-link" href="https://www.youtube.com/results?search_query=${encodeURIComponent(d.nombre)}" target="_blank">Ver vídeos</a>
+                 <a class="popup-link" href="https://www.google.com/maps?q=${d.coords[0]},${d.coords[1]}" target="_blank">Abrir en Google Maps</a>
+               </div>`;
+
+  const icon=iconos[d.categoria]??fallbackIcon;
+  //const mk=L.marker(d.coords,{icon}).bindPopup(popup).addTo(capas[d.categoria]);
+  const mk = L.marker(d.coords, { icon })
+  .bindPopup(popup)
+  .bindTooltip(d.nombre, {
+    permanent: true,
+    direction: 'top',
+    offset: [0, -10],      // ajusta verticalmente la etiqueta
+    className: 'label-tooltip'
+  })
+  .addTo(capas[d.categoria]);
+  markerObjs.push({marker:mk,data:d});
+});
+
+/* Control de capas */
+L.control.layers(null,capas,{collapsed:false,position:'topright'}).addTo(map);
+
+/* === 5. FILTRO de texto === */
+const caja=document.getElementById('filterInput');
+caja.addEventListener('input',applyFilter);
+
+/* === 6. BAR/LISTADO lateral === */
+const sidebar=document.getElementById('sidebar');
+const btn=document.getElementById('toggleSidebar');
+btn.onclick=()=>sidebar.classList.toggle('open');
+const lista=document.getElementById('listado');
+
+/* === 7. Funciones === */
+function applyFilter(){
+  const term=caja.value.trim().toLowerCase();
+  markerObjs.forEach(o=>{
+    const text=(o.data.nombre+' '+o.data.categoria+' '+o.data.detalles.join(' ')).toLowerCase();
+    const match=text.includes(term);
+    const el=o.marker.getElement();
+    if(el) el.style.display=match?'':'none';
+  });
+  updateSidebar();
+}
+
+function updateSidebar(){
+  const bnds=map.getBounds();
+  const term=caja.value.trim().toLowerCase();
+  let html='';
+  markerObjs.forEach(o=>{
+    const el=o.marker.getElement();
+    if(!el||el.style.display==='none') return;           // filtrado
+    if(!bnds.contains(o.marker.getLatLng())) return;     // fuera de vista
+    html+=`<li onclick="panTo(${o.marker.getLatLng().lat},${o.marker.getLatLng().lng})">${o.data.nombre}</li>`;
+  });
+  lista.innerHTML=html||'<i>No hay resultados</i>';
+}
+
+/* Exponer función para los <li> */
+window.panTo=(lat,lng)=>{
+  sidebar.classList.remove('open');
+  map.setView([lat,lng],14,{animate:true});
+};
+
+/* === 8. Actualizar listado cada vez que cambie la vista === */
+map.on('moveend',updateSidebar);
+map.whenReady(()=>{applyFilter();});
+
+/* Cerrar sidebar al cargar en móvil si no hay espacio */
+if(innerWidth<600) sidebar.classList.remove('open');
+</script>
 </body>
 </html>
